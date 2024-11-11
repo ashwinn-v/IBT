@@ -1,8 +1,14 @@
 #python3 setup.py install
+import os
+
 from setuptools import setup
 from torch.utils.cpp_extension import BuildExtension, CUDAExtension
-import os
+
 from distutils.sysconfig import get_config_vars
+
+# os.environ['CUDA_HOME'] = os.environ.get('CONDA_PREFIX')
+# os.environ['LD_LIBRARY_PATH'] = f"{os.environ.get('CONDA_PREFIX')}/lib:{os.environ.get('LD_LIBRARY_PATH', '')}"
+
 
 (opt,) = get_config_vars('OPT')
 os.environ['OPT'] = " ".join(

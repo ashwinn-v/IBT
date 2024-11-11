@@ -10,7 +10,7 @@ import torch.optim as optim
 from tqdm import tqdm
 from torch.optim.lr_scheduler import CosineAnnealingLR, StepLR
 from data import ModelNet40,ModelNet10,ScanObjectNN
-from model import PointNet, IBT_cls
+from model import PointNet, IBT_cls, IBT_cls_fps
 import numpy as np
 from torch.utils.data import DataLoader
 import time
@@ -49,6 +49,8 @@ def train(args, io):
         model = PointNet(args).to(device)
     elif args.model == 'ibt':
         model = IBT_cls(args).to(device)
+    elif args.model == 'ibt_fps':
+        model = IBT_cls_fps(args).to(device)
     else:
         raise Exception("Not implemented")
 
@@ -97,6 +99,7 @@ def train(args, io):
             train_loss += loss.item() * batch_size
             train_true.append(label.cpu().numpy())
             train_pred.append(preds.detach().cpu().numpy())
+            
         if args.scheduler == 'cos':
             scheduler.step()
         elif args.scheduler == 'step':
@@ -109,12 +112,15 @@ def train(args, io):
         train_true = np.concatenate(train_true)
         train_pred = np.concatenate(train_pred)
         train_acc = metrics.accuracy_score(train_true, train_pred)
-        avg_per_class_acc,per_acc = metrics.balanced_accuracy_score(train_true, train_pred)
-        outstr = 'Train %d, loss: %.6f, train acc: %.6f, train avg acc: %.6f' % (epoch,
-                                                                                 train_loss*1.0/count,
-                                                                                 train_acc,
-                                                                                 avg_per_class_acc)
-        io.cprint(outstr)
+        print("test_true:", train_true)
+        print("test_pred:", train_pred)
+        print("test_acc:", train_acc)
+        # avg_per_class_acc,per_acc = metrics.balanced_accuracy_score(train_true, train_pred)
+        # outstr = 'Train %d, loss: %.6f, train acc: %.6f, train avg acc: %.6f' % (epoch,
+        #                                                                          train_loss*1.0/count,
+        #                                                                          train_acc,
+        #                                                                          avg_per_class_acc)
+        # io.cprint(outstr)
 
         ####################
         # Test
@@ -140,12 +146,15 @@ def train(args, io):
             test_true = np.concatenate(test_true)
             test_pred = np.concatenate(test_pred)
             test_acc = metrics.accuracy_score(test_true, test_pred)
-            avg_per_class_acc,per_acc = metrics.balanced_accuracy_score(test_true, test_pred)
-            outstr = 'Test %d, loss: %.6f, test acc: %.6f, test avg acc: %.6f' % (epoch,
-                                                                                test_loss*1.0/count,
-                                                                                test_acc,
-                                                                                avg_per_class_acc)
-            io.cprint(outstr)
+            print("test_true:", test_true)
+            print("test_pred:", test_pred)
+            print("test_acc:", test_acc)
+            # avg_per_class_acc,per_acc = metrics.balanced_accuracy_score(test_true, test_pred)
+            # outstr = 'Test %d, loss: %.6f, test acc: %.6f, test avg acc: %.6f' % (epoch,
+            #                                                                     test_loss*1.0/count,
+            #                                                                     test_acc,
+            #                                                                     avg_per_class_acc)
+            # io.cprint(outstr)
             if test_acc >= best_test_acc:
                 best_test_acc = test_acc
                 torch.save(model.state_dict(), 'outputs/%s/models/model.t7' % args.exp_name)
@@ -163,6 +172,8 @@ def test(args, io):
         model = PointNet(args).to(device)
     elif args.model == 'ibt':
         model = IBT_cls(args).to(device)
+    elif args.model == 'ibt_fps':
+        model = IBT_cls_fps(args).to(device)
     else:
         raise Exception("Not implemented")
 
@@ -188,16 +199,16 @@ def test(args, io):
     test_true = np.concatenate(test_true)
     test_pred = np.concatenate(test_pred)
     test_acc = metrics.accuracy_score(test_true, test_pred)
-    avg_per_class_acc , per_acc = metrics.balanced_accuracy_score(test_true, test_pred)
-    outstr = 'Test :: test acc: %.6f, test avg acc: %.6f'%(test_acc, avg_per_class_acc)
-    io.cprint(outstr)
+    # avg_per_class_acc , per_acc = metrics.balanced_accuracy_score(test_true, test_pred)
+    # outstr = 'Test :: test acc: %.6f, test avg acc: %.6f'%(test_acc, avg_per_class_acc)
+    # io.cprint(outstr)
 
 
 if __name__ == "__main__":
     # Training settings
     parser = argparse.ArgumentParser(description='Point Cloud Recognition')
     parser.add_argument('--exp_name', type=str, default='exp', metavar='N',help='Name of the experiment')
-    parser.add_argument('--model', type=str, default='ibt', metavar='N',choices=['pointnet', 'ibt'],
+    parser.add_argument('--model', type=str, default='ibt', metavar='N',choices=['pointnet', 'ibt', 'ibt_fps'],
                         help='Model to use, [pointnet, ibt]')
     parser.add_argument('--dataset', type=str, default='modelnet40', metavar='N',choices=['modelnet40'])
     parser.add_argument('--batch_size', type=int, default=24, metavar='batch_size',help='Size of batch)')

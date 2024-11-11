@@ -1,0 +1,120 @@
+Namespace(exp_name='partseg', model='ibt_fps', dataset='shapenetpart', class_choice=None, batch_size=12, test_batch_size=8, epochs=250, use_sgd=True, lr=0.001, momentum=0.9, scheduler='cos', no_cuda=False, seed=1, eval=False, num_points=1024, dropout=0.5, emb_dims=1024, k=80, model_path='', visu='', visu_format='ply')
+Using GPU : 0 from 2 devices
+Namespace(exp_name='partseg', model='ibt_fps', dataset='shapenetpart', class_choice=None, batch_size=12, test_batch_size=8, epochs=250, use_sgd=True, lr=0.001, momentum=0.9, scheduler='cos', no_cuda=False, seed=1, eval=False, num_points=1024, dropout=0.5, emb_dims=1024, k=80, model_path='', visu='', visu_format='ply')
+Using GPU : 0 from 2 devices
+Namespace(exp_name='partseg', model='ibt_fps', dataset='shapenetpart', class_choice=None, batch_size=12, test_batch_size=8, epochs=250, use_sgd=True, lr=0.001, momentum=0.9, scheduler='cos', no_cuda=False, seed=1, eval=False, num_points=1024, dropout=0.5, emb_dims=1024, k=80, model_path='', visu='', visu_format='ply')
+Using GPU : 0 from 2 devices
+Namespace(exp_name='partseg', model='ibt_fps', dataset='shapenetpart', class_choice=None, batch_size=12, test_batch_size=8, epochs=250, use_sgd=True, lr=0.001, momentum=0.9, scheduler='cos', no_cuda=False, seed=1, eval=False, num_points=1024, dropout=0.5, emb_dims=1024, k=80, model_path='', visu='', visu_format='ply')
+Using GPU : 0 from 2 devices
+Namespace(exp_name='partseg', model='ibt_fps', dataset='shapenetpart', class_choice=None, batch_size=12, test_batch_size=8, epochs=250, use_sgd=True, lr=0.001, momentum=0.9, scheduler='cos', no_cuda=False, seed=1, eval=False, num_points=1024, dropout=0.5, emb_dims=1024, k=80, model_path='', visu='', visu_format='ply')
+Using GPU : 0 from 2 devices
+Namespace(exp_name='partseg', model='ibt_fps', dataset='shapenetpart', class_choice=None, batch_size=12, test_batch_size=8, epochs=250, use_sgd=True, lr=0.001, momentum=0.9, scheduler='cos', no_cuda=False, seed=1, eval=False, num_points=1024, dropout=0.5, emb_dims=1024, k=80, model_path='', visu='', visu_format='ply')
+Using GPU : 0 from 2 devices
+Namespace(exp_name='partseg', model='ibt_fps', dataset='shapenetpart', class_choice=None, batch_size=12, test_batch_size=8, epochs=250, use_sgd=True, lr=0.001, momentum=0.9, scheduler='cos', no_cuda=False, seed=1, eval=False, num_points=1024, dropout=0.5, emb_dims=1024, k=80, model_path='', visu='', visu_format='ply')
+Using GPU : 0 from 2 devices
+Namespace(exp_name='partseg', model='ibt_fps', dataset='shapenetpart', class_choice=None, batch_size=12, test_batch_size=8, epochs=250, use_sgd=True, lr=0.001, momentum=0.9, scheduler='cos', no_cuda=False, seed=1, eval=False, num_points=1024, dropout=0.5, emb_dims=1024, k=80, model_path='', visu='', visu_format='ply')
+Using GPU : 0 from 2 devices
+Namespace(exp_name='partseg', model='ibt_fps', dataset='shapenetpart', class_choice=None, batch_size=12, test_batch_size=8, epochs=250, use_sgd=True, lr=0.001, momentum=0.9, scheduler='cos', no_cuda=False, seed=1, eval=False, num_points=1024, dropout=0.5, emb_dims=1024, k=80, model_path='', visu='', visu_format='ply')
+Using GPU : 0 from 2 devices
+Namespace(exp_name='partseg', model='ibt', dataset='shapenetpart', class_choice=None, batch_size=12, test_batch_size=8, epochs=250, use_sgd=True, lr=0.001, momentum=0.9, scheduler='cos', no_cuda=False, seed=1, eval=False, num_points=1024, dropout=0.5, emb_dims=1024, k=80, model_path='', visu='', visu_format='ply')
+Using GPU : 0 from 2 devices
+Namespace(exp_name='partseg', model='ibt', dataset='shapenetpart', class_choice=None, batch_size=12, test_batch_size=8, epochs=250, use_sgd=True, lr=0.001, momentum=0.9, scheduler='cos', no_cuda=False, seed=1, eval=False, num_points=1024, dropout=0.5, emb_dims=1024, k=80, model_path='', visu='', visu_format='ply')
+Using GPU : 0 from 2 devices
+Test 0, loss: 1.510426, test acc: 0.916102, test iou: 0.793635
+Test 1, loss: 1.465045, test acc: 0.926050, test iou: 0.814858
+Namespace(exp_name='partseg', model='ibt_fps', dataset='shapenetpart', class_choice=None, batch_size=12, test_batch_size=8, epochs=250, use_sgd=True, lr=0.001, momentum=0.9, scheduler='cos', no_cuda=False, seed=1, eval=False, num_points=1024, dropout=0.5, emb_dims=1024, k=80, model_path='', visu='', visu_format='ply')
+Using GPU : 0 from 2 devices
+Namespace(exp_name='partseg', model='ibt_fps', dataset='shapenetpart', class_choice=None, batch_size=12, test_batch_size=8, epochs=250, use_sgd=True, lr=0.001, momentum=0.9, scheduler='cos', no_cuda=False, seed=1, eval=False, num_points=1024, dropout=0.5, emb_dims=1024, k=80, model_path='', visu='', visu_format='ply')
+Using GPU : 0 from 2 devices
+Namespace(exp_name='partseg', model='ibt_fps', dataset='shapenetpart', class_choice=None, batch_size=12, test_batch_size=8, epochs=250, use_sgd=True, lr=0.001, momentum=0.9, scheduler='cos', no_cuda=False, seed=1, eval=False, num_points=1024, dropout=0.5, emb_dims=1024, k=80, model_path='', visu='', visu_format='ply')
+Using GPU : 0 from 2 devices
+Namespace(exp_name='partseg', model='ibt_fps', dataset='shapenetpart', class_choice=None, batch_size=12, test_batch_size=8, epochs=250, use_sgd=True, lr=0.001, momentum=0.9, scheduler='cos', no_cuda=False, seed=1, eval=False, num_points=1024, dropout=0.5, emb_dims=1024, k=80, model_path='', visu='', visu_format='ply')
+Using GPU : 0 from 2 devices
+Namespace(exp_name='partseg', model='ibt_fps', dataset='shapenetpart', class_choice=None, batch_size=12, test_batch_size=8, epochs=250, use_sgd=True, lr=0.001, momentum=0.9, scheduler='cos', no_cuda=False, seed=1, eval=False, num_points=1024, dropout=0.5, emb_dims=1024, k=80, model_path='', visu='', visu_format='ply')
+Using GPU : 0 from 2 devices
+Test 0, loss: 1.510524, test acc: 0.919142, test iou: 0.791175
+Namespace(exp_name='partseg', model='ibt_fps', dataset='shapenetpart', class_choice=None, batch_size=12, test_batch_size=8, epochs=250, use_sgd=True, lr=0.001, momentum=0.9, scheduler='cos', no_cuda=False, seed=1, eval=False, num_points=1024, dropout=0.5, emb_dims=1024, k=80, model_path='', visu='', visu_format='ply')
+Using GPU : 0 from 2 devices
+Test 0, loss: 1.510406, test acc: 0.918376, test iou: 0.791063
+Test 1, loss: 1.471900, test acc: 0.924104, test iou: 0.805534
+Test 2, loss: 1.467365, test acc: 0.928389, test iou: 0.815875
+Test 3, loss: 1.452699, test acc: 0.927681, test iou: 0.817650
+Test 4, loss: 1.459309, test acc: 0.924359, test iou: 0.809734
+Test 5, loss: 1.445678, test acc: 0.925938, test iou: 0.814270
+Test 6, loss: 1.436769, test acc: 0.930804, test iou: 0.820577
+Test 7, loss: 1.436253, test acc: 0.931115, test iou: 0.831392
+Test 8, loss: 1.430777, test acc: 0.933085, test iou: 0.833570
+Test 9, loss: 1.440346, test acc: 0.928451, test iou: 0.823209
+Test 10, loss: 1.431861, test acc: 0.931606, test iou: 0.829336
+Test 11, loss: 1.465983, test acc: 0.915454, test iou: 0.795288
+Test 12, loss: 1.423266, test acc: 0.933644, test iou: 0.832937
+Test 13, loss: 1.417453, test acc: 0.938114, test iou: 0.841883
+Test 14, loss: 1.425946, test acc: 0.934212, test iou: 0.835469
+Test 15, loss: 1.425127, test acc: 0.937141, test iou: 0.838989
+Test 16, loss: 1.422765, test acc: 0.934451, test iou: 0.834898
+Test 17, loss: 1.441532, test acc: 0.926412, test iou: 0.826664
+Test 18, loss: 1.425057, test acc: 0.933463, test iou: 0.835379
+Test 19, loss: 1.419259, test acc: 0.935759, test iou: 0.839824
+Test 20, loss: 1.414515, test acc: 0.936662, test iou: 0.844058
+Test 21, loss: 1.448958, test acc: 0.925254, test iou: 0.827999
+Test 22, loss: 1.422573, test acc: 0.933831, test iou: 0.838233
+Test 23, loss: 1.434417, test acc: 0.929736, test iou: 0.832924
+Test 24, loss: 1.421133, test acc: 0.935361, test iou: 0.841602
+Test 25, loss: 1.428336, test acc: 0.931296, test iou: 0.829995
+Test 26, loss: 1.424391, test acc: 0.934050, test iou: 0.838544
+Test 27, loss: 1.416370, test acc: 0.937517, test iou: 0.844110
+Test 28, loss: 1.416544, test acc: 0.937158, test iou: 0.840770
+Test 29, loss: 1.433677, test acc: 0.929000, test iou: 0.828071
+Test 30, loss: 1.420640, test acc: 0.935099, test iou: 0.835542
+Test 31, loss: 1.435689, test acc: 0.930017, test iou: 0.827347
+Test 32, loss: 1.427367, test acc: 0.932457, test iou: 0.832536
+Test 33, loss: 1.414446, test acc: 0.937912, test iou: 0.845719
+Test 34, loss: 1.414089, test acc: 0.937977, test iou: 0.846035
+Test 35, loss: 1.437597, test acc: 0.924803, test iou: 0.829789
+Test 36, loss: 1.413049, test acc: 0.938412, test iou: 0.847424
+Test 37, loss: 1.417385, test acc: 0.935761, test iou: 0.843266
+Test 38, loss: 1.407568, test acc: 0.940524, test iou: 0.851500
+Test 39, loss: 1.417740, test acc: 0.937832, test iou: 0.840988
+Test 40, loss: 1.412326, test acc: 0.938723, test iou: 0.843609
+Test 41, loss: 1.416350, test acc: 0.937343, test iou: 0.846184
+Test 42, loss: 1.425702, test acc: 0.934478, test iou: 0.839942
+Test 43, loss: 1.463709, test acc: 0.920295, test iou: 0.826264
+Test 44, loss: 1.416739, test acc: 0.936027, test iou: 0.843853
+Test 45, loss: 1.408148, test acc: 0.939982, test iou: 0.849599
+Test 46, loss: 1.414385, test acc: 0.939151, test iou: 0.846134
+Test 47, loss: 1.417401, test acc: 0.938669, test iou: 0.845088
+Test 48, loss: 1.416244, test acc: 0.939895, test iou: 0.846141
+Test 49, loss: 1.418171, test acc: 0.934685, test iou: 0.838605
+Test 50, loss: 1.428183, test acc: 0.934862, test iou: 0.838470
+Test 51, loss: 1.421528, test acc: 0.934910, test iou: 0.836863
+Test 52, loss: 1.446409, test acc: 0.925194, test iou: 0.831652
+Test 53, loss: 1.415379, test acc: 0.939341, test iou: 0.847059
+Test 54, loss: 1.414298, test acc: 0.940395, test iou: 0.847832
+Test 55, loss: 1.412877, test acc: 0.939300, test iou: 0.849475
+Test 56, loss: 1.409140, test acc: 0.940041, test iou: 0.850950
+Test 57, loss: 1.407689, test acc: 0.940764, test iou: 0.849402
+Test 58, loss: 1.408363, test acc: 0.939778, test iou: 0.850313
+Test 59, loss: 1.426479, test acc: 0.935621, test iou: 0.845106
+Test 60, loss: 1.425198, test acc: 0.934094, test iou: 0.833707
+Test 61, loss: 1.409778, test acc: 0.940528, test iou: 0.848041
+Test 62, loss: 1.413281, test acc: 0.937929, test iou: 0.847825
+Test 63, loss: 1.419010, test acc: 0.940513, test iou: 0.847634
+Test 64, loss: 1.414381, test acc: 0.937414, test iou: 0.843462
+Test 65, loss: 1.410142, test acc: 0.940507, test iou: 0.849121
+Test 66, loss: 1.420963, test acc: 0.936388, test iou: 0.845262
+Test 67, loss: 1.419115, test acc: 0.938066, test iou: 0.848017
+Test 68, loss: 1.448055, test acc: 0.923835, test iou: 0.832327
+Test 69, loss: 1.410777, test acc: 0.939798, test iou: 0.847941
+Test 70, loss: 1.413518, test acc: 0.939121, test iou: 0.845214
+Test 71, loss: 1.411902, test acc: 0.939499, test iou: 0.850043
+Test 72, loss: 1.428959, test acc: 0.933819, test iou: 0.842440
+Test 73, loss: 1.416390, test acc: 0.939137, test iou: 0.848339
+Test 74, loss: 1.425702, test acc: 0.932795, test iou: 0.840145
+Test 75, loss: 1.404526, test acc: 0.941187, test iou: 0.849344
+Test 76, loss: 1.408447, test acc: 0.939999, test iou: 0.849863
+Test 77, loss: 1.408033, test acc: 0.940138, test iou: 0.851579
+Test 78, loss: 1.420592, test acc: 0.936983, test iou: 0.842508
+Test 79, loss: 1.417732, test acc: 0.937700, test iou: 0.847547
+Test 80, loss: 1.415794, test acc: 0.937772, test iou: 0.844974
+Test 81, loss: 1.421388, test acc: 0.935325, test iou: 0.840113
+Test 82, loss: 1.411714, test acc: 0.938883, test iou: 0.850822

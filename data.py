@@ -28,7 +28,7 @@ def download_shapenetpart():
     DATA_DIR = os.path.join(BASE_DIR, 'data')
     if not os.path.exists(DATA_DIR):
         os.mkdir(DATA_DIR)
-    if not os.path.exists(os.path.join(DATA_DIR, 'shapenet_part_seg_hdf5_data')):
+    if not os.path.exists(os.path.join(DATA_DIR, 'shapenetpart_hdf5_2048')):
         www = 'https://shapenet.cs.stanford.edu/media/shapenet_part_seg_hdf5_data.zip'
         zipfile = os.path.basename(www)
         os.system('wget %s --no-check-certificate; unzip %s' % (www, zipfile))
@@ -60,10 +60,10 @@ def download_S3DIS():
 
 
 def load_data_cls(partition):
-    #download_modelnet40()
+    download_modelnet40()
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     #DATA_DIR = os.path.join(BASE_DIR, 'data')
-    DATA_DIR = '/home/data/lzh'
+    DATA_DIR = '/data/lzh'
     all_data = []
     all_label = []
     for h5_name in glob.glob(os.path.join(DATA_DIR, 'modelnet40_ply_hdf5_2048', '*%s*.h5'%partition)):
@@ -78,10 +78,10 @@ def load_data_cls(partition):
     return all_data, all_label
 
 def load_data_cls_10(partition):
-    #download_modelnet40()
-    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    download_modelnet40()
+    BASE_DIR = '/mnt/data/ashwin/IBT'
     #DATA_DIR = os.path.join(BASE_DIR, 'data')
-    DATA_DIR = '/home/data/lzh'
+    DATA_DIR = '/mnt/data/ashwin/IBT/data'
     all_data = []
     all_label = []
     for h5_name in glob.glob(os.path.join(DATA_DIR, 'modelnet10_hdf5_2048', '*%s*.h5'%partition)):
@@ -97,10 +97,10 @@ def load_data_cls_10(partition):
 
 def load_scanobjectnn_data(partition):
     # BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-    BASE_DIR = '/home'
+    BASE_DIR = '/mnt/data/ashwin/IBT'
     all_data = []
     all_label = []
-
+    print(partition)
     h5_name = BASE_DIR + '/data/lzh/h5_files/main_split/' + partition + '_objectdataset_augmentedrot_scale75.h5'
     # h5_name = BASE_DIR + '/data/lzh/h5_files/main_split/' + partition + '_objectdataset.h5'
     f = h5py.File(h5_name, mode="r")
@@ -114,23 +114,25 @@ def load_scanobjectnn_data(partition):
     return all_data, all_label
 
 def load_data_partseg(partition):
-    #download_shapenetpart()
+    download_shapenetpart()
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     #DATA_DIR = os.path.join(BASE_DIR, 'data')
-    DATA_DIR = '/home/data/lzh'
+    DATA_DIR = '/mnt/data/ashwin/IBT/data'
     all_data = []
     all_label = []
     all_seg = []
     if partition == 'trainval':
-        file = glob.glob(os.path.join(DATA_DIR, 'shapenet_part_seg_hdf5_data', '*train*.h5')) \
-               + glob.glob(os.path.join(DATA_DIR, 'shapenet_part_seg_hdf5_data', '*val*.h5'))
+        
+        file = glob.glob(os.path.join(DATA_DIR, 'shapenetpart_hdf5_2048', '*train*.h5')) \
+               + glob.glob(os.path.join(DATA_DIR, 'shapenetpart_hdf5_2048', '*val*.h5'))
     else:
-        file = glob.glob(os.path.join(DATA_DIR, 'shapenet_part_seg_hdf5_data', '*%s*.h5'%partition))
+        file = glob.glob(os.path.join(DATA_DIR, 'shapenetpart_hdf5_2048', '*%s*.h5'%partition))
     for h5_name in file:
         f = h5py.File(h5_name, 'r+')
         data = f['data'][:].astype('float32')
         label = f['label'][:].astype('int64')
-        seg = f['pid'][:].astype('int64')
+        # import pdb; pdb.set_trace()
+        seg = f['seg'][:].astype('int64')
         f.close()
         all_data.append(data)
         all_label.append(label)
@@ -143,7 +145,7 @@ def load_data_partseg(partition):
 
 def prepare_test_data_semseg():
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-    DATA_DIR = os.path.join(BASE_DIR, 'data')
+    DATA_DIR = '/mnt/data/ashwin/IBT/data'
     if not os.path.exists(os.path.join(DATA_DIR, 'stanford_indoor3d')):
         os.system('python prepare_data/collect_indoor3d_data.py')
     if not os.path.exists(os.path.join(DATA_DIR, 'indoor3d_sem_seg_hdf5_data_test')):
@@ -152,8 +154,8 @@ def prepare_test_data_semseg():
 
 def load_data_semseg(partition, test_area):
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-    DATA_DIR = '/home/data/lzh'
-    #download_S3DIS()
+    DATA_DIR = '/mnt/data/ashwin/IBT/data'
+    download_S3DIS()
     prepare_test_data_semseg()
     if partition == 'train':
         data_dir = os.path.join(DATA_DIR, 'indoor3d_sem_seg_hdf5_data')
@@ -332,6 +334,7 @@ class ModelNet10(Dataset):
 
 class ScanObjectNN(Dataset):
     def __init__(self, num_points, partition='training'):
+        partition = 'training'
         self.data, self.label = load_scanobjectnn_data(partition)
         self.num_points = num_points
         self.partition = partition

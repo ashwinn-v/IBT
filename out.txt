@@ -1,0 +1,34 @@
+Namespace(exp_name='partseg', model='ibt_fps', dataset='shapenetpart', class_choice=None, batch_size=12, test_batch_size=8, epochs=250, use_sgd=True, lr=0.001, momentum=0.9, scheduler='cos', no_cuda=False, seed=1, eval=False, num_points=1024, dropout=0.5, emb_dims=1024, k=80, model_path='', visu='', visu_format='ply')
+Using GPU : 0 from 2 devices
+Let's use 2 GPUs!
+Use SGD
+  0%|          | 0/1167 [00:00<?, ?it/s]  0%|          | 0/1167 [00:00<?, ?it/s]
+Traceback (most recent call last):
+  File "/mnt/data/ashwin/IBT/main_partseg.py", line 408, in <module>
+    train(args, io)
+  File "/mnt/data/ashwin/IBT/main_partseg.py", line 201, in train
+    seg_pred = model(data, label_one_hot)
+  File "/mnt/data/ashwin/miniconda3/envs/pcuda/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/mnt/data/ashwin/miniconda3/envs/pcuda/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/mnt/data/ashwin/miniconda3/envs/pcuda/lib/python3.9/site-packages/torch/nn/parallel/data_parallel.py", line 193, in forward
+    outputs = self.parallel_apply(replicas, inputs, module_kwargs)
+  File "/mnt/data/ashwin/miniconda3/envs/pcuda/lib/python3.9/site-packages/torch/nn/parallel/data_parallel.py", line 212, in parallel_apply
+    return parallel_apply(
+  File "/mnt/data/ashwin/miniconda3/envs/pcuda/lib/python3.9/site-packages/torch/nn/parallel/parallel_apply.py", line 126, in parallel_apply
+    output.reraise()
+  File "/mnt/data/ashwin/miniconda3/envs/pcuda/lib/python3.9/site-packages/torch/_utils.py", line 715, in reraise
+    raise exception
+NotImplementedError: Caught NotImplementedError in replica 0 on device 0.
+Original Traceback (most recent call last):
+  File "/mnt/data/ashwin/miniconda3/envs/pcuda/lib/python3.9/site-packages/torch/nn/parallel/parallel_apply.py", line 96, in _worker
+    output = module(*input, **kwargs)
+  File "/mnt/data/ashwin/miniconda3/envs/pcuda/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/mnt/data/ashwin/miniconda3/envs/pcuda/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/mnt/data/ashwin/miniconda3/envs/pcuda/lib/python3.9/site-packages/torch/nn/modules/module.py", line 394, in _forward_unimplemented
+    raise NotImplementedError(
+NotImplementedError: Module [IBT_partseg_fps] is missing the required "forward" function
+

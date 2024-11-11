@@ -1,0 +1,6 @@
+# Ignore data directory and all its contents
+data/
+
+# Ignore OS-specific files
+.DS_Store
+Thumbs.db

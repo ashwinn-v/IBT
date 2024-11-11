@@ -1,0 +1,21 @@
+# ninja log v5
+3	30427	1731045147800095442	/mnt/data/ashwin/IBT/lib/pointops/build/temp.linux-x86_64-cpython-39/src/pointops_api.o	98f503b2fb06c207
+14	15740	1731045392074086880	/mnt/data/ashwin/IBT/lib/pointops/build/temp.linux-x86_64-cpython-39/src/interpolation/interpolation_cuda.o	795fbf44092fd747
+14	15799	1731045392134085396	/mnt/data/ashwin/IBT/lib/pointops/build/temp.linux-x86_64-cpython-39/src/knnquery/knnquery_cuda.o	110fe178c6b98e1b
+13	15948	1731045392280081786	/mnt/data/ashwin/IBT/lib/pointops/build/temp.linux-x86_64-cpython-39/src/aggregation/aggregation_cuda.o	df0e656fa60a943e
+15	16048	1731045392379079338	/mnt/data/ashwin/IBT/lib/pointops/build/temp.linux-x86_64-cpython-39/src/sampling/sampling_cuda.o	5bc20710f53e53c6
+15	16142	1731045392470077088	/mnt/data/ashwin/IBT/lib/pointops/build/temp.linux-x86_64-cpython-39/src/subtraction/subtraction_cuda.o	16852b6bb58a2d13
+13	16237	1731045392563074789	/mnt/data/ashwin/IBT/lib/pointops/build/temp.linux-x86_64-cpython-39/src/grouping/grouping_cuda.o	9601a20303caab3a
+17	17570	1731046211984684088	/mnt/data/ashwin/IBT/lib/pointops/build/temp.linux-x86_64-cpython-39/src/sampling/sampling_cuda.o	28709a7a166ce818
+15	17720	1731046212134680347	/mnt/data/ashwin/IBT/lib/pointops/build/temp.linux-x86_64-cpython-39/src/grouping/grouping_cuda.o	62dc3a9da6377eb7
+16	17754	1731046212168679499	/mnt/data/ashwin/IBT/lib/pointops/build/temp.linux-x86_64-cpython-39/src/knnquery/knnquery_cuda.o	df741d8486c03b9
+15	18052	1731046212465672092	/mnt/data/ashwin/IBT/lib/pointops/build/temp.linux-x86_64-cpython-39/src/interpolation/interpolation_cuda.o	4768307f8aa461e3
+14	18118	1731046212531670445	/mnt/data/ashwin/IBT/lib/pointops/build/temp.linux-x86_64-cpython-39/src/aggregation/aggregation_cuda.o	eb411aa3c2fc16dd
+17	18251	1731046212663667153	/mnt/data/ashwin/IBT/lib/pointops/build/temp.linux-x86_64-cpython-39/src/subtraction/subtraction_cuda.o	ab40c81033fb94fd
+17	34132	1731046228518271695	/mnt/data/ashwin/IBT/lib/pointops/build/temp.linux-x86_64-cpython-39/src/subtraction/subtraction_cuda_kernel.o	9d246ac57bdd7bab
+15	34178	1731046228562270597	/mnt/data/ashwin/IBT/lib/pointops/build/temp.linux-x86_64-cpython-39/src/aggregation/aggregation_cuda_kernel.o	4768f0768421665e
+15	34550	1731046228933261343	/mnt/data/ashwin/IBT/lib/pointops/build/temp.linux-x86_64-cpython-39/src/grouping/grouping_cuda_kernel.o	3ce37822191395f6
+16	34577	1731046228933261343	/mnt/data/ashwin/IBT/lib/pointops/build/temp.linux-x86_64-cpython-39/src/interpolation/interpolation_cuda_kernel.o	14893986088c360e
+17	34756	1731046229158255730	/mnt/data/ashwin/IBT/lib/pointops/build/temp.linux-x86_64-cpython-39/src/pointops_api.o	81982760183fc932
+16	35760	1731046230138231285	/mnt/data/ashwin/IBT/lib/pointops/build/temp.linux-x86_64-cpython-39/src/knnquery/knnquery_cuda_kernel.o	e1b13e4d6ec6a1c0
+17	36180	1731046230576220360	/mnt/data/ashwin/IBT/lib/pointops/build/temp.linux-x86_64-cpython-39/src/sampling/sampling_cuda_kernel.o	f44ce79c405fe37d

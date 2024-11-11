@@ -1,6 +1,7 @@
 
 
 import os
+import pdb
 import sys
 import copy
 import math
@@ -149,7 +150,75 @@ class SA_Layer(nn.Module):
 #     feature = torch.cat((feature-x, x), dim=3).permute(0, 3, 1, 2).contiguous()
   
 #     return feature      # (batch_size, 2*num_dims, num_points, k)
+def feature_interpolation(xyz1, xyz2, points2, k=3):
+    """
+    Input:
+        xyz1: input points position data, [B, N, C]
+        xyz2: sampled input points position data, [B, S, C]
+        points2: input points data, [B, C', S]
+    Return:
+        new_points: upsampled points data, [B, C', N]
+    """
+    B, N, C = xyz1.shape
+    _, S, _ = xyz2.shape
 
+    # Find k nearest neighbors
+    dist, idx = knn_point(k, xyz2, xyz1)  # dist: [B, N, k], idx: [B, N, k]
+    dist = dist.clamp(min=1e-10)  # prevent division by zero
+
+    # Calculate weights based on distance
+    dist_recip = 1.0 / dist
+    norm = torch.sum(dist_recip, dim=2, keepdim=True)
+    weight = dist_recip / norm  # [B, N, k]
+
+    # Get features of nearest neighbors
+    points2 = points2.transpose(1, 2)  # [B, S, C']
+    
+    # Interpolate features
+    interpolated_points = torch.zeros(B, N, points2.shape[-1], device=points2.device)
+    for i in range(k):
+        neighbor_points = points2[torch.arange(B).unsqueeze(1), idx[:,:,i], :]
+        interpolated_points += weight[:,:,i:i+1] * neighbor_points
+
+    return interpolated_points.transpose(1, 2)  # [B, C', N]
+
+def knn_point(k, xyz2, xyz1):
+    """
+    Input:
+        k: number of k in k-nn search
+        xyz2: (batch_size, n2, 3)
+        xyz1: (batch_size, n1, 3)
+    Output:
+        val: (batch_size, n1, k) squared distances
+        idx: (batch_size, n1, k) indices of k nearest neighbors
+    """
+    B, N1, C = xyz1.shape
+    _, N2, _ = xyz2.shape
+    inner = -2 * torch.matmul(xyz1, xyz2.transpose(1,2))
+    squared_xyz1 = torch.sum(xyz1**2, dim=-1, keepdim=True)
+    squared_xyz2 = torch.sum(xyz2**2, dim=-1).unsqueeze(1)
+    dist = squared_xyz1 + inner + squared_xyz2  # B, N1, N2
+    
+    dist, idx = torch.topk(dist, k=k, dim=-1, largest=False)
+    return dist, idx
+
+def gather_points(points, idx):
+    """
+    Input:
+        points: (batch_size, c, n)
+        idx: (batch_size, m)
+    Output:
+        gathered_points: (batch_size, c, m)
+    """
+    device = points.device
+    B = points.shape[0]
+    view_shape = list(idx.shape)
+    view_shape[1:] = [1] * (len(view_shape) - 1)
+    repeat_shape = list(idx.shape)
+    repeat_shape[0] = 1
+    batch_indices = torch.arange(B, dtype=torch.long).to(device).view(view_shape).repeat(repeat_shape)
+    gathered_points = points[batch_indices, :, idx]
+    return gathered_points
 
 def knn(x, k):
     inner = -2*torch.matmul(x.transpose(2, 1), x)
@@ -560,6 +629,213 @@ class IBT_partseg(nn.Module):
         x = self.conv11(x)                      # (batch_size, 256, num_points) -> (batch_size, seg_num_all, num_points)
         
         return x
+    
+
+class IBT_partseg_fps(nn.Module):
+    def __init__(self, args, seg_num_all):
+        super(IBT_partseg_fps, self).__init__()
+        self.args = args
+        self.dropout = args.dropout
+        self.seg_num_all = seg_num_all
+        self.k = args.k
+        
+        # Sampling ratios
+        self.n_points_l0 = 1024  # First sampling level
+        self.n_points_l1 = 512   # Second sampling level
+        self.n_points_l2 = 256   # Third sampling level
+        
+        # Rest of the initialization remains same
+        self.transform_net = Transform_Net(args)
+        
+        self.bn_p1 = nn.BatchNorm1d(32)
+        self.bn_p2 = nn.BatchNorm1d(64)
+        self.bn_p3 = nn.BatchNorm1d(128)
+        self.bn_c0 = nn.BatchNorm2d(64)
+        self.bn_c1 = nn.BatchNorm2d(64)
+        self.bn_c2 = nn.BatchNorm2d(64)
+        self.bn = nn.BatchNorm1d(64)
+        self.bn0 = nn.BatchNorm2d(64*2)
+        self.bn1 = nn.BatchNorm2d(64*2)
+        self.bn2 = nn.BatchNorm2d(64*2)
+        self.bn3 = nn.BatchNorm2d(128)
+        self.bn4 = nn.BatchNorm1d(128)
+        self.bn5 = nn.BatchNorm1d(128)
+        self.bn6 = nn.BatchNorm1d(128)
+        self.bn7 = nn.BatchNorm1d(args.emb_dims)
+        self.bn8 = nn.BatchNorm1d(512)
+        self.bn9 = nn.BatchNorm1d(256)
+        self.bn10 = nn.BatchNorm1d(128)
+        
+        self.trans0 = SA_Layer(128)
+        self.trans1 = SA_Layer(128)
+        self.trans2 = SA_Layer(128)
+
+        # Rest of the layers remain same
+        self.point1 = nn.Sequential(nn.Conv1d(3, 32, kernel_size=1, bias=False),self.bn_p1,
+                                   nn.LeakyReLU(negative_slope=0.2))
+        self.point2 = nn.Sequential(nn.Conv1d(32, 64, kernel_size=1, bias=False),self.bn_p2,
+                                   nn.LeakyReLU(negative_slope=0.2))
+        self.point3 = nn.Sequential(nn.Conv1d(64, 128, kernel_size=1, bias=False),self.bn_p3,
+                                   nn.LeakyReLU(negative_slope=0.2))
+        self.mlp0 = nn.Sequential(nn.Conv2d(4+128, 64, kernel_size=1, bias=False),self.bn_c0,
+                                   nn.LeakyReLU(negative_slope=0.2))
+        self.mlp1 = nn.Sequential(nn.Conv2d(4+128, 64, kernel_size=1, bias=False),self.bn_c1,
+                                   nn.LeakyReLU(negative_slope=0.2))
+        self.mlp2 = nn.Sequential(nn.Conv2d(4+128, 64, kernel_size=1, bias=False),self.bn_c2,
+                                   nn.LeakyReLU(negative_slope=0.2))
+        self.conv0 = nn.Sequential(nn.Conv2d(64*3, 64*2, kernel_size=1, bias=False),self.bn0,
+                                   nn.LeakyReLU(negative_slope=0.2))
+        self.conv1 = nn.Sequential(nn.Conv2d(64*3, 64*2, kernel_size=1, bias=False),self.bn1,
+                                   nn.LeakyReLU(negative_slope=0.2))
+        # self.conv2 = nn.Sequential(nn.Conv2d(64*2, 64, kernel_size=1, bias=False),self.bn2,
+        #                            nn.LeakyReLU(negative_slope=0.2))
+        self.conv3 = nn.Sequential(nn.Conv2d(64*3, 64*2, kernel_size=1, bias=False),self.bn3,
+                                   nn.LeakyReLU(negative_slope=0.2))
+        self.conv4 = nn.Sequential(nn.Conv1d(128*2, 128, kernel_size=1, bias=False),self.bn4,
+                                   nn.LeakyReLU(negative_slope=0.2))
+        self.conv5 = nn.Sequential(nn.Conv1d(128*2, 64*2, kernel_size=1, bias=False),self.bn5,
+                                   nn.LeakyReLU(negative_slope=0.2))
+        self.conv6 = nn.Sequential(nn.Conv1d(128*2, 64*2, kernel_size=1, bias=False),self.bn6,
+                                   nn.LeakyReLU(negative_slope=0.2))
+        self.conv7 = nn.Sequential(nn.Conv1d(512, args.emb_dims, kernel_size=1, bias=False),self.bn7,
+                                   nn.LeakyReLU(negative_slope=0.2))
+        self.conv = nn.Sequential(nn.Conv1d(16, 64, kernel_size=1, bias=False),self.bn,
+                                   nn.LeakyReLU(negative_slope=0.2))
+        self.conv8 = nn.Sequential(nn.Conv1d(1472, 512, kernel_size=1, bias=False),self.bn8,
+                                   nn.LeakyReLU(negative_slope=0.2))
+        self.dp1 = nn.Dropout(p=args.dropout)
+        self.conv9 = nn.Sequential(nn.Conv1d(512, 256, kernel_size=1, bias=False),self.bn9,
+                                   nn.LeakyReLU(negative_slope=0.2))
+        self.dp2 = nn.Dropout(p=args.dropout)
+        self.conv10 = nn.Sequential(nn.Conv1d(256, 128, kernel_size=1, bias=False),self.bn10,
+                                   nn.LeakyReLU(negative_slope=0.2))
+        self.conv11 = nn.Conv1d(128, self.seg_num_all, kernel_size=1, bias=False)
+        self.score_fn0 = nn.Sequential(
+            nn.Linear(128, 128, bias=False),
+            nn.Softmax(dim=-2)
+        )
+        self.score_fn1 = nn.Sequential(
+            nn.Linear(128, 128, bias=False),
+            nn.Softmax(dim=-2)
+        )
+        self.score_fn2 = nn.Sequential(
+            nn.Linear(128, 128, bias=False),
+            nn.Softmax(dim=-2)
+        )
+
+    def forward(self, x, l):
+        batch_size = x.size(0)
+        num_points = x.size(2)
+        xyz = x[:,:3,:]     # B,C,N
+
+        # Initial feature extraction on full point cloud
+        x00 = self.point1(x)
+        x00 = self.point2(x00)
+        x_p = self.point3(x00)
+        x00 = x_p.max(dim=-1, keepdim=False)[0]
+        x00 = x00.unsqueeze(-1)
+        x00 = x00.repeat(1,1,num_points)
+
+        # First FPS before heavy computation
+        fps_idx0 = fps_subsample(xyz, self.n_points_l0)
+        xyz_0 = index_points(xyz.transpose(2,1), fps_idx0).transpose(2,1)
+        x_p_0 = index_points(x_p.transpose(2,1), fps_idx0).transpose(2,1)
+
+        # First hierarchical level (1024 points)
+        pos, x = get_graph_feature(xyz_0, x_p_0, k=self.k)
+        pos = self.mlp0(pos)
+        x = torch.cat([pos, x], dim=1)
+        x = self.conv0(x)
+        x0 = x.max(dim=-1, keepdim=False)[0]
+        
+        scores = self.score_fn0(x.permute(0,2,3,1)).permute(0,3,1,2)
+        features = torch.sum(scores * x, dim=-1, keepdim=True).squeeze(-1)
+        x0 = torch.cat((x0,features),dim=1)
+        x0 = self.conv4(x0)
+        t = torch.sigmoid(x0)
+        x_t = self.trans0(x_p_0, xyz_0, t)
+        x0 = x0 + x_t
+
+        # Second level (512 points)
+        fps_idx1 = fps_subsample(xyz_0, self.n_points_l1)
+        xyz_1 = index_points(xyz_0.transpose(2,1), fps_idx1).transpose(2,1)
+        x0_1 = index_points(x0.transpose(2,1), fps_idx1).transpose(2,1)
+
+        pos, x = get_graph_feature(xyz_1, x0_1, k=self.k)
+        pos = self.mlp1(pos)
+        x = torch.cat([pos, x], dim=1)
+        x = self.conv1(x)
+        x1 = x.max(dim=-1, keepdim=False)[0]
+        
+        scores = self.score_fn1(x.permute(0,2,3,1)).permute(0,3,1,2)
+        features = torch.sum(scores * x, dim=-1, keepdim=True).squeeze(-1)
+        x1 = torch.cat((x1,features),dim=1)
+        x1 = self.conv5(x1)
+        t = torch.sigmoid(x1)
+        x_t = self.trans1(x0_1, xyz_1, t)
+        x1 = x1 + x_t
+
+        # Third level (256 points)
+        fps_idx2 = fps_subsample(xyz_1, self.n_points_l2)
+        xyz_2 = index_points(xyz_1.transpose(2,1), fps_idx2).transpose(2,1)
+        x1_2 = index_points(x1.transpose(2,1), fps_idx2).transpose(2,1)
+
+        pos, x = get_graph_feature(xyz_2, x1_2, k=self.k)
+        pos = self.mlp2(pos)
+        x = torch.cat([pos, x], dim=1)
+        x = self.conv3(x)
+        x2 = x.max(dim=-1, keepdim=False)[0]
+        
+        scores = self.score_fn2(x.permute(0,2,3,1)).permute(0,3,1,2)
+        features = torch.sum(scores * x, dim=-1, keepdim=True).squeeze(-1)
+        x2 = torch.cat((x2,features),dim=1)
+        x2 = self.conv6(x2)
+        t = torch.sigmoid(x2)
+        x_t = self.trans2(x1_2, xyz_2, t)
+        x2 = x2 + x_t
+
+        # Upsample features to original resolution
+        x0_up = feature_interpolation(
+            xyz.transpose(2,1),
+            xyz_0.transpose(2,1),
+            x0
+        )
+        
+        x1_up = feature_interpolation(
+            xyz.transpose(2,1),
+            xyz_1.transpose(2,1),
+            x1
+        )
+        
+        x2_up = feature_interpolation(
+            xyz.transpose(2,1),
+            xyz_2.transpose(2,1),
+            x2
+        )
+
+        # Global feature aggregation
+        x = torch.cat((x00, x0_up, x1_up, x2_up), dim=1)
+        x = self.conv7(x)
+        x = x.max(dim=-1, keepdim=True)[0]
+
+        # Process category label
+        l = l.view(batch_size, -1, 1)
+        l = self.conv(l)
+
+        # Combine global and local features
+        x = torch.cat((x, l), dim=1)
+        x = x.repeat(1, 1, num_points)
+
+        # Final segmentation layers
+        x = torch.cat((x, x0_up, x1_up, x2_up), dim=1)
+        x = self.conv8(x)
+        x = self.dp1(x)
+        x = self.conv9(x)
+        x = self.dp2(x)
+        x = self.conv10(x)
+        x = self.conv11(x)
+        
+        return x
 
 
 class IBT_semseg(nn.Module):
@@ -642,6 +918,7 @@ class IBT_semseg(nn.Module):
             nn.Linear(128, 128, bias=False),
             nn.Softmax(dim=-2)
         )
+     
         
 
     def forward(self, x):
@@ -740,6 +1017,227 @@ class IBT_semseg(nn.Module):
         
         return x
 
+
+
+def fps_subsample(xyz, npoint):
+    """
+    Furthest point sampling
+    Input:
+        xyz: pointcloud data, [B, C, N]
+        npoint: number of samples
+    Return:
+        centroids: sampled pointcloud index, [B, npoint]
+    """
+    device = xyz.device
+    B, C, N = xyz.shape
+    centroids = torch.zeros(B, npoint, dtype=torch.long).to(device)
+    distance = torch.ones(B, N).to(device) * 1e10
+    batch_indices = torch.arange(B, dtype=torch.long).to(device)
+    
+    # Randomly select the first point
+    farthest = torch.randint(0, N, (B,), dtype=torch.long).to(device)
+    for i in range(npoint):
+        centroids[:, i] = farthest
+        centroid = xyz[batch_indices, :, farthest].view(B, C, 1)
+        dist = torch.sum((xyz - centroid) ** 2, 1)
+        mask = dist < distance
+        distance[mask] = dist[mask]
+        farthest = torch.max(distance, -1)[1]
+    return centroids
+
+class IBT_cls_fps(nn.Module):
+    def __init__(self, args, dropout=0, alpha=0.2):
+        super(IBT_cls_fps, self).__init__()
+        self.args = args
+        self.k = args.k
+        self.dropout = args.dropout
+        
+        # Sampling ratios for progressive point reduction
+        self.n_points_l0 = 1024  # First sampling level
+        self.n_points_l1 = 512   # Second sampling level
+        self.n_points_l2 = 256   # Third sampling level
+        
+        self.trans0 = SA_Layer(128)
+        self.trans1 = SA_Layer(128)
+        self.trans2 = SA_Layer(128)
+        self.trans3 = SA_Layer(1024)
+        
+        self.bn_p1 = nn.BatchNorm1d(32)
+        self.bn_p2 = nn.BatchNorm1d(64)
+        self.bn_p3 = nn.BatchNorm1d(128)
+        self.bn_c0 = nn.BatchNorm2d(64)
+        self.bn_c1 = nn.BatchNorm2d(64)
+        self.bn_c2 = nn.BatchNorm2d(64)
+        self.bn_c3 = nn.BatchNorm2d(64)
+
+        self.bn = nn.BatchNorm1d(64)
+        self.bn0 = nn.BatchNorm2d(64*2)
+        self.bn1 = nn.BatchNorm2d(64*2)
+        self.bn2 = nn.BatchNorm2d(64*2)
+        self.bn3 = nn.BatchNorm2d(128)
+        self.bn4 = nn.BatchNorm1d(128)
+        self.bn5 = nn.BatchNorm1d(128)
+        self.bn6 = nn.BatchNorm1d(128)
+        self.bn7 = nn.BatchNorm1d(args.emb_dims)
+        self.bn10 = nn.BatchNorm1d(64*2)
+        self.bn11 = nn.BatchNorm1d(64)
+        self.bn12 = nn.BatchNorm1d(64)
+
+        self.point1 = nn.Sequential(nn.Conv1d(3, 32, kernel_size=1, bias=False),self.bn_p1,
+                                   nn.LeakyReLU(negative_slope=0.2))
+        self.point2 = nn.Sequential(nn.Conv1d(32, 64, kernel_size=1, bias=False),self.bn_p2,
+                                   nn.LeakyReLU(negative_slope=0.2))
+        self.point3 = nn.Sequential(nn.Conv1d(64, 128, kernel_size=1, bias=False),self.bn_p3,
+                                   nn.LeakyReLU(negative_slope=0.2))
+        self.mlp0 = nn.Sequential(nn.Conv2d(4+128, 64, kernel_size=1, bias=False),self.bn_c0,
+                                   nn.LeakyReLU(negative_slope=0.2))
+        self.mlp1 = nn.Sequential(nn.Conv2d(4+128, 64, kernel_size=1, bias=False),self.bn_c1,
+                                   nn.LeakyReLU(negative_slope=0.2))
+        self.mlp2 = nn.Sequential(nn.Conv2d(4+128, 64, kernel_size=1, bias=False),self.bn_c2,
+                                   nn.LeakyReLU(negative_slope=0.2))
+        self.mlp3 = nn.Sequential(nn.Conv2d(4, 64, kernel_size=1, bias=False),self.bn_c3,
+                                   nn.LeakyReLU(negative_slope=0.2))
+        self.conv = nn.Sequential(nn.Conv1d(3, 64, kernel_size=1, bias=False),self.bn,
+                                   nn.LeakyReLU(negative_slope=0.2))
+        self.conv0 = nn.Sequential(nn.Conv2d(64*3, 64*2, kernel_size=1, bias=False),self.bn0,
+                                   nn.LeakyReLU(negative_slope=0.2))
+        self.conv1 = nn.Sequential(nn.Conv2d(64*3, 64*2, kernel_size=1, bias=False),self.bn1,
+                                   nn.LeakyReLU(negative_slope=0.2))
+        self.conv3 = nn.Sequential(nn.Conv2d(64*3, 64*2, kernel_size=1, bias=False),self.bn3,
+                                   nn.LeakyReLU(negative_slope=0.2))
+        self.conv4 = nn.Sequential(nn.Conv1d(128*2, 128, kernel_size=1, bias=False),self.bn4,
+                                   nn.LeakyReLU(negative_slope=0.2))
+        self.conv5 = nn.Sequential(nn.Conv1d(128*2, 128, kernel_size=1, bias=False),self.bn5,
+                                   nn.LeakyReLU(negative_slope=0.2))
+        self.conv6 = nn.Sequential(nn.Conv1d(128*2, 128, kernel_size=1, bias=False),self.bn6,
+                                   nn.LeakyReLU(negative_slope=0.2))
+        self.conv7 = nn.Sequential(nn.Conv1d(512, args.emb_dims, kernel_size=1, bias=False),self.bn7,
+                                   nn.LeakyReLU(negative_slope=0.2))
+        self.conv10 = nn.Sequential(nn.Conv1d(64, 64*2, kernel_size=1, bias=False),self.bn10,
+                                   nn.LeakyReLU(negative_slope=0.2))
+        self.conv11 = nn.Sequential(nn.Conv1d(128, 64, kernel_size=1, bias=False),self.bn11,
+                                   nn.LeakyReLU(negative_slope=0.2))
+        self.conv12 = nn.Sequential(nn.Conv1d(128, 64, kernel_size=1, bias=False),self.bn12,
+                                   nn.LeakyReLU(negative_slope=0.2))
+
+        self.linear1 = nn.Linear(args.emb_dims, 512, bias=False)
+        self.bn8 = nn.BatchNorm1d(512)
+        self.dp1 = nn.Dropout(p=args.dropout)
+        self.linear2 = nn.Linear(512, 256)
+        self.bn9 = nn.BatchNorm1d(256)
+        self.dp2 = nn.Dropout(p=args.dropout)
+        self.linear3 = nn.Linear(256, 15)
+
+        self.score_fn0 = nn.Sequential(
+            nn.Linear(128, 128, bias=False),
+            nn.Softmax(dim=-2)
+        )
+        self.score_fn1 = nn.Sequential(
+            nn.Linear(128, 128, bias=False),
+            nn.Softmax(dim=-2)
+        )
+        self.score_fn2 = nn.Sequential(
+            nn.Linear(128, 128, bias=False),
+            nn.Softmax(dim=-2)
+        )
+        self.score_fn3 = nn.Sequential(
+            nn.Linear(64, 64, bias=False),
+            nn.Softmax(dim=-2)
+        )
+
+    def forward(self, x):
+        batch_size = x.size(0)
+        num_points = x.size(2)
+        xyz = x[:,:3,:]     # B,C,N
+
+        # Initial feature extraction on full point cloud
+        x00 = self.point1(x)
+        x_p = self.point2(x00)
+        x_p = self.point3(x_p)
+    
+        x00 = x_p.max(dim=-1, keepdim=False)[0]
+        x00 = x00.unsqueeze(-1)
+        x00 = x00.repeat(1,1,num_points)
+
+        # First FPS before heavy computation
+        fps_idx0 = fps_subsample(xyz, self.n_points_l0)
+        xyz_0 = index_points(xyz.transpose(2,1), fps_idx0).transpose(2,1)  # Sampled points
+        x_p_0 = index_points(x_p.transpose(2,1), fps_idx0).transpose(2,1)  # Sampled features
+        x00_0 = index_points(x00.transpose(2,1), fps_idx0).transpose(2,1)  # Sampled global features
+
+        # First hierarchical level with reduced points (1024)
+        pos, x = get_graph_feature(xyz_0, x_p_0, k=self.k)
+        pos = self.mlp0(pos)
+        x = torch.cat([pos, x], dim=1)
+        x = self.conv0(x)
+        x0 = x.max(dim=-1, keepdim=False)[0]
+        
+        scores = self.score_fn0(x.permute(0,2,3,1)).permute(0,3,1,2)
+        features = torch.sum(scores * x, dim=-1, keepdim=True).squeeze(-1)
+        x0 = torch.cat((x0,features),dim=1)
+        x0 = self.conv4(x0)
+        t = torch.sigmoid(x0)
+        x_t = self.trans0(x_p_0, xyz_0, t)
+        x0 = x0 + x_t
+
+        # Second FPS to 512 points
+        fps_idx1 = fps_subsample(xyz_0, self.n_points_l1)
+        xyz_1 = index_points(xyz_0.transpose(2,1), fps_idx1).transpose(2,1)
+        x0 = index_points(x0.transpose(2,1), fps_idx1).transpose(2,1)
+
+        # Second hierarchical level with 512 points
+        pos, x = get_graph_feature(xyz_1, x0, k=self.k)
+        pos = self.mlp1(pos)
+        x = torch.cat([pos, x], dim=1)
+        x = self.conv1(x)
+        x1 = x.max(dim=-1, keepdim=False)[0]
+        
+        scores = self.score_fn1(x.permute(0,2,3,1)).permute(0,3,1,2)
+        features = torch.sum(scores * x, dim=-1, keepdim=True).squeeze(-1)
+        x1 = torch.cat((x1,features),dim=1)
+        x1 = self.conv5(x1)
+        t = torch.sigmoid(x1)
+        x_t = self.trans1(x0, xyz_1, t)
+        x1 = x1 + x_t
+
+        # Third FPS to 256 points
+        fps_idx2 = fps_subsample(xyz_1, self.n_points_l2)
+        xyz_2 = index_points(xyz_1.transpose(2,1), fps_idx2).transpose(2,1)
+        x1 = index_points(x1.transpose(2,1), fps_idx2).transpose(2,1)
+
+        # Third hierarchical level with 256 points
+        pos, x = get_graph_feature(xyz_2, x1, k=self.k)
+        pos = self.mlp2(pos)
+        x = torch.cat([pos, x], dim=1)
+        x = self.conv3(x)
+        x2 = x.max(dim=-1, keepdim=False)[0]
+        
+        scores = self.score_fn2(x.permute(0,2,3,1)).permute(0,3,1,2)
+        features = torch.sum(scores * x, dim=-1, keepdim=True).squeeze(-1)
+        x2 = torch.cat((x2,features),dim=1)
+        x2 = self.conv6(x2)
+        t = torch.sigmoid(x2)
+        x_t = self.trans2(x1, xyz_2, t)
+        x2 = x2 + x_t
+
+        # Downsample all features to match final resolution (256 points)
+        x00_2 = index_points(x00_0.transpose(2,1), fps_idx2).transpose(2,1)  # 1024 -> 256
+        x0_2 = index_points(x0.transpose(2,1), fps_idx2).transpose(2,1)      # 512 -> 256
+
+        # Global feature aggregation (now all tensors have 256 points)
+        x = torch.cat((x00_2, x0_2, x1, x2), dim=1)  # All tensors are now [B, C, 256]
+        x = self.conv7(x)
+        x = x.max(dim=-1, keepdim=True)[0]
+        
+        # Classification head
+        x = F.adaptive_max_pool1d(x, 1).view(batch_size, -1)
+        x = F.leaky_relu(self.bn8(self.linear1(x)), negative_slope=0.2)
+        x = self.dp1(x)
+        x = F.leaky_relu(self.bn9(self.linear2(x)), negative_slope=0.2)
+        x = self.dp2(x)
+        x = self.linear3(x)
+        
+        return x
 
 
 class IBT_cls(nn.Module):

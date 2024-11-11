@@ -9,7 +9,7 @@ from tqdm import tqdm
 import torch.optim as optim
 from torch.optim.lr_scheduler import CosineAnnealingLR, StepLR
 from data import ShapeNetPart
-from model import IBT_partseg,PointNet
+from model import IBT_partseg, IBT_partseg_fps,PointNet
 import numpy as np
 from torch.utils.data import DataLoader
 from util import cal_loss, IOStream
@@ -25,6 +25,8 @@ visual_warning = True
 class_choices = ['airplane', 'bag', 'cap', 'car', 'chair', 'earphone', 'guitar', 'knife', 'lamp', 'laptop', 'motorbike', 'mug', 'pistol', 'rocket', 'skateboard', 'table']
 seg_num = [4, 2, 2, 4, 4, 3, 3, 2, 4, 2, 6, 2, 3, 3, 3, 3]
 index_start = [0, 4, 6, 8, 12, 16, 19, 22, 24, 28, 30, 36, 38, 41, 44, 47]
+
+
 
 
 def _init_():
@@ -149,6 +151,8 @@ def train(args, io):
         model = IBT_partseg(args, seg_num_all).to(device)
     elif args.model == 'pointnet':
         model = PointNet(args, seg_num_all).to(device)
+    elif args.model == 'ibt_fps':
+        model = IBT_partseg_fps(args, seg_num_all).to(device)
     else:
         raise Exception("Not implemented")
     #print(str(model))
@@ -220,17 +224,17 @@ def train(args, io):
         train_true_cls = np.concatenate(train_true_cls)
         train_pred_cls = np.concatenate(train_pred_cls)
         train_acc = metrics.accuracy_score(train_true_cls, train_pred_cls)
-        avg_per_class_acc, per_class = metrics.balanced_accuracy_score(train_true_cls, train_pred_cls)
-        train_true_seg = np.concatenate(train_true_seg, axis=0)
-        train_pred_seg = np.concatenate(train_pred_seg, axis=0)
-        train_label_seg = np.concatenate(train_label_seg)
-        train_ious = calculate_shape_IoU(train_pred_seg, train_true_seg, train_label_seg, args.class_choice)
-        outstr = 'Train %d, loss: %.6f, train acc: %.6f, train avg acc: %.6f, train iou: %.6f' % (epoch, 
-                                                                                                  train_loss*1.0/count,
-                                                                                                  train_acc,
-                                                                                                  avg_per_class_acc,
-                                                                                                  np.mean(train_ious))
-        io.cprint(outstr)
+        # avg_per_class_acc, per_class = metrics.balanced_accuracy_score(train_true_cls, train_pred_cls)
+        # train_true_seg = np.concatenate(train_true_seg, axis=0)
+        # train_pred_seg = np.concatenate(train_pred_seg, axis=0)
+        # train_label_seg = np.concatenate(train_label_seg)
+        # train_ious = calculate_shape_IoU(train_pred_seg, train_true_seg, train_label_seg, args.class_choice)
+        # outstr = 'Train %d, loss: %.6f, train acc: %.6f, train avg acc: %.6f, train iou: %.6f' % (epoch, 
+        #                                                                                           train_loss*1.0/count,
+        #                                                                                           train_acc,
+        #                                                                                         #   avg_per_class_acc,
+        #                                                                                           np.mean(train_ious))
+        # io.cprint(outstr)
          
             
         ####################
@@ -273,15 +277,15 @@ def train(args, io):
             test_true_cls = np.concatenate(test_true_cls)
             test_pred_cls = np.concatenate(test_pred_cls)
             test_acc = metrics.accuracy_score(test_true_cls, test_pred_cls)
-            avg_per_class_acc, per_class = metrics.balanced_accuracy_score(test_true_cls, test_pred_cls)
+            # avg_per_class_acc, per_class = metrics.balanced_accuracy_score(test_true_cls, test_pred_cls)
             test_true_seg = np.concatenate(test_true_seg, axis=0)
             test_pred_seg = np.concatenate(test_pred_seg, axis=0)
             test_label_seg = np.concatenate(test_label_seg)
             test_ious = calculate_shape_IoU(test_pred_seg, test_true_seg, test_label_seg, args.class_choice)
-            outstr = 'Test %d, loss: %.6f, test acc: %.6f, test avg acc: %.6f, test iou: %.6f' % (epoch,
+            outstr = 'Test %d, loss: %.6f, test acc: %.6f, test iou: %.6f' % (epoch,
                                                                                                 test_loss*1.0/count,
                                                                                                 test_acc,
-                                                                                                avg_per_class_acc,
+                                                                                                # avg_per_class_acc,
                                                                                                 np.mean(test_ious))
             io.cprint(outstr)
             if np.mean(test_ious) >= best_test_iou:
@@ -303,6 +307,8 @@ def test(args, io):
         model = IBT_partseg(args, seg_num_all).to(device)
     elif args.model == 'pointnet':
         model = PointNet(args, seg_num_all).to(device)
+    elif args.model == 'ibt_fps':
+        model = IBT_partseg_fps(args, seg_num_all).to(device)
     else:
         raise Exception("Not implemented")
 
@@ -343,14 +349,14 @@ def test(args, io):
     test_true_cls = np.concatenate(test_true_cls)
     test_pred_cls = np.concatenate(test_pred_cls)
     test_acc = metrics.accuracy_score(test_true_cls, test_pred_cls)
-    avg_per_class_acc , per_class= metrics.balanced_accuracy_score(test_true_cls, test_pred_cls)
+    # avg_per_class_acc , per_class= metrics.balanced_accuracy_score(test_true_cls, test_pred_cls)
     test_true_seg = np.concatenate(test_true_seg, axis=0)
     test_pred_seg = np.concatenate(test_pred_seg, axis=0)
     test_label_seg = np.concatenate(test_label_seg)
     test_ious = calculate_shape_IoU(test_pred_seg, test_true_seg, test_label_seg, args.class_choice)
-    outstr = 'Test :: test acc: %.6f, test avg acc: %.6f, test iou: %.6f' % (test_acc,
-                                                                             avg_per_class_acc,
-                                                                             np.mean(test_ious))
+    outstr = 'Test :: test acc: %.6f, test iou: %.6f' % (test_acc,
+                                                        #  avg_per_class_acc,
+                                                        np.mean(test_ious))
     
     io.cprint(outstr)
 
@@ -358,8 +364,8 @@ def test(args, io):
 if __name__ == "__main__":
     # Training settings
     parser = argparse.ArgumentParser(description='Point Cloud Part Segmentation')
-    parser.add_argument('--exp_name', type=str, default='exp', metavar='N',help='Name of the experiment')
-    parser.add_argument('--model', type=str, default='ibt', metavar='N',choices=['ibt','pointnet'],help='Model to use, [ibt]')
+    parser.add_argument('--exp_name', type=str, default='segmentation', metavar='N',help='Name of the experiment')
+    parser.add_argument('--model', type=str, default='ibt', metavar='N',choices=['ibt','pointnet', 'ibt_fps'],help='Model to use, [ibt]')
     parser.add_argument('--dataset', type=str, default='shapenetpart', metavar='N',choices=['shapenetpart'])
     parser.add_argument('--class_choice', type=str, default=None, metavar='N',
                         choices=['airplane', 'bag', 'cap', 'car', 'chair',
